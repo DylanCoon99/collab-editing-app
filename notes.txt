@@ -1,0 +1,46 @@
+Plan
+
+Collaborative Document Editing App
+- Store Conflict-free Replicated Data Type (CRDT) state or canonical document in the backend (postgreSQL)
+- Client have their own working copy (via Yjs/Automerge)
+- WebSocket server acts as a pub/sub relay, syncing changes in real-time
+- Periodically (or on close), the backend saves the current state
+
+MVP Approach
+- Start w/ a centralized storage for simplicity
+- Use WebSockets for real-time updates
+- Use simple JSON patch/diff syncing btwn clients
+- Later, use CRDT as described above (Yjs + WebSocket relay server) to move toward a distributed model
+
+
+Architecture
+
+- Frontend (React)
+	- Users interact via browser
+	- Login/Registration UI
+	- Dashboard (current users documents)
+	- Real time document editor
+	- WebSocket client (for live updates)
+
+- HTTP API Server (Go + Gin)
+	- Handles all RESTful operationsm, such as:
+		- User auth (POST /loginm POST /register)
+		- Document CRUD (GET/POST /documents)
+		- Permission Sharing (POST /documents/:id/share)
+	- Uses JWT middleware for auth
+	- Communicates with the PostgreSQL database
+
+- WebSocket Server (Go + Gin)
+	- Handles real time collaboration
+		- Receives document edits from the a client
+		- Broadcasts edits to all other clients connected to the same doc
+		- Optionally handles typing indicators, cursors, etc.
+	- May share memory/state w/ HTTP server or run as a separate service
+
+- PostgreSQL Database
+	- Stores persistent app data
+		- Users
+		- Documents (title, content, ownership)
+		- Permissions (who can view/edit)
+		- Optionally: version history or CRDT state blobs
+
