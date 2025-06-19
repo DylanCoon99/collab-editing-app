@@ -44,3 +44,48 @@ Architecture
 		- Permissions (who can view/edit)
 		- Optionally: version history or CRDT state blobs
 
+
+
+Database Schema
+
+*User
+
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+
+*Document
+
+CREATE TABLE documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    owner_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT DEFAULT '', -- OR BYTEA/JSONB for CRDT state
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+
+*Document Permissions
+
+CREATE TABLE document_permissions (
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    permission TEXT CHECK (permission IN ('view', 'edit')),
+    PRIMARY KEY (user_id, document_id)
+);
+
+
+
+Database migration (goose)
+
+goose -dir sql/schema postgres postgres://postgres:M25201430@localhost:5432/collab_docs?sslmode=disable up 
+
+
+
+Database Access
+psql -U postgres -h localhost -p 5432 -d collab_docs
