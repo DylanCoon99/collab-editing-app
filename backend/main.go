@@ -12,13 +12,10 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/database"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/controllers"
+
 )
 
 
-
-type apiConfig struct {
-	DBQueries *database.Queries
-}
 
 
 
@@ -42,7 +39,7 @@ func main() {
 	dbQueries := database.New(db)
 
 
-	var apiCfg apiConfig
+	var apiCfg controllers.ApiConfig
 	apiCfg.DBQueries = dbQueries
 
 
@@ -64,6 +61,7 @@ func main() {
     {
 
     	api.GET("/test", controllers.Test)
+    	api.POST("/user", apiCfg.CreateUser)
 
     }
 

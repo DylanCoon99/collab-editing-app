@@ -4,9 +4,17 @@ package controllers
 import (
 	"log"
 	"net/http"
+	//"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/DylanCoon99/collab-editing-app/backend/internal/auth"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/database"
 )
+
+
+
+type ApiConfig struct {
+	DBQueries *database.Queries
+}
 
 
 func Test(c *gin.Context) {
@@ -24,21 +32,49 @@ func Test(c *gin.Context) {
 
 
 // create user
-func CreateUser(c *gin.Context) {
+func (cfg *ApiConfig) CreateUser(c *gin.Context) {
 
 
-	var newUserParams database.CreateUserParams
+	type request struct {
+		Password string `json:password`
+		Email    string `json:"email"`
+	}
 
-	// bind json to user params
-	if err := c.ShouldBindJSON(&newUserParams); err != nil {
+	var req request
+
+
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input", "details": err.Error()})
 		return
 	}
 
-	// call database functionality to create user
+	hashed_password, err := auth.HashPassword(req.Password)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password for new user"})
+		return
+	}
+
+	email := req.Email
+
+	params := database.CreateUserParams {
+		Email:          email,
+		PasswordHash: hashed_password,
+	}
 
 
+	user, err := cfg.DBQueries.CreateUser(c, params)
+	if err != nil {
+		// failed to create user
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		return
+	}
 
+	// encode the user to a json response
+
+
+	c.JSON(http.StatusCreated, user)
+	return
 
 }
 

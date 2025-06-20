@@ -26,8 +26,8 @@ type DocumentPermission struct {
 }
 
 type User struct {
-	ID           uuid.UUID
-	Email        string
-	PasswordHash string
-	CreatedAt    sql.NullTime
+	ID           uuid.UUID     `json:"id"`
+	Email        string        `json:"email"`
+	PasswordHash string        `json:"hashed_password"`
+	CreatedAt    sql.NullTime  `json:"created_at"`
 }
