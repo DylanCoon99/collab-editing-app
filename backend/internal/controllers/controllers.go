@@ -70,8 +70,6 @@ func (cfg *ApiConfig) CreateUser(c *gin.Context) {
 		return
 	}
 
-	// encode the user to a json response
-
 
 	c.JSON(http.StatusCreated, user)
 	return
@@ -84,3 +82,71 @@ func (cfg *ApiConfig) CreateUser(c *gin.Context) {
 
 
 // get user by id
+
+
+
+
+
+// create document
+func (cfg *ApiConfig) CreateDocument(c *gin.Context) {
+
+	/*
+	type CreateDocumentParams struct {
+		Title   string
+		OwnerID uuid.NullUUID
+		Content sql.NullString
+	}
+	*/
+
+	var params database.CreateDocumentParams
+
+
+	if err := c.ShouldBindJSON(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input", "details": err.Error()})
+		return
+	}
+
+
+
+	document, err := cfg.DBQueries.CreateDocument(c, params)
+	if err != nil {
+		// failed to create document
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create document"})
+		return
+	}
+
+
+	c.JSON(http.StatusCreated, document)
+	return
+
+}
+
+
+
+// get document by id
+
+
+
+// get documents for user
+
+
+
+
+// update document
+
+
+
+
+
+// get document permissions
+
+
+
+// remove document permissions
+
+
+
+// share documents
+
+
+

@@ -62,6 +62,7 @@ func main() {
 
     	api.GET("/test", controllers.Test)
     	api.POST("/user", apiCfg.CreateUser)
+    	api.POST("/document", apiCfg.CreateDocument)
 
     }
 
