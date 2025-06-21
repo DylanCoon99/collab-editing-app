@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	//"encoding/json"
+	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/auth"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/database"
@@ -90,22 +91,13 @@ func (cfg *ApiConfig) CreateUser(c *gin.Context) {
 // create document
 func (cfg *ApiConfig) CreateDocument(c *gin.Context) {
 
-	/*
-	type CreateDocumentParams struct {
-		Title   string
-		OwnerID uuid.NullUUID
-		Content sql.NullString
-	}
-	*/
 
 	var params database.CreateDocumentParams
-
 
 	if err := c.ShouldBindJSON(&params); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input", "details": err.Error()})
 		return
 	}
-
 
 
 	document, err := cfg.DBQueries.CreateDocument(c, params)
@@ -124,7 +116,28 @@ func (cfg *ApiConfig) CreateDocument(c *gin.Context) {
 
 
 // get document by id
+func (cfg *ApiConfig) GetDocumentById(c *gin.Context) {
 
+	document_uuid := c.Param("document_id")
+
+	document_id, err := uuid.Parse(document_uuid)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse document id."})
+		return
+	}
+
+
+	document, err := cfg.DBQueries.GetDocumentByID(c, document_id)
+	
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database."})
+		return
+	}
+
+	c.JSON(http.StatusOK, document)
+
+}
 
 
 // get documents for user

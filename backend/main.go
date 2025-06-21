@@ -59,10 +59,15 @@ func main() {
 
     api := r.Group("/api")
     {
-
+    	//test endpoint
     	api.GET("/test", controllers.Test)
+
+    	// user endpoints
     	api.POST("/user", apiCfg.CreateUser)
+
+    	// document endpoints
     	api.POST("/document", apiCfg.CreateDocument)
+    	api.GET("/document/:document_id", apiCfg.GetDocumentById)
 
     }
 
