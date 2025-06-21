@@ -83,7 +83,28 @@ func (cfg *ApiConfig) CreateUser(c *gin.Context) {
 
 
 // get user by id
+func (cfg *ApiConfig) GetUserById(c *gin.Context) {
 
+	user_uuid := c.Param("user_id")
+
+	user_id, err := uuid.Parse(user_uuid)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user id."})
+		return
+	}
+
+
+	user, err := cfg.DBQueries.GetUserByID(c, user_id)
+	
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database."})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+
+}
 
 
 
