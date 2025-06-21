@@ -94,6 +94,21 @@ psql -U postgres -h localhost -p 5432 -d collab_docs
 
 models w/ json tags
 
+type Document struct {
+	ID        uuid.UUID       `json:"id"`
+	Title     string          `json:"title"`
+	OwnerID   uuid.NullUUID   `json:"owner_id"`
+	Content   sql.NullString  `json:"content"`
+	CreatedAt sql.NullTime    `json:"created_at"`
+	UpdatedAt sql.NullTime    `json:"updated_at"`
+}
+
+type DocumentPermission struct {
+	UserID     uuid.UUID       `json:"user_id"`
+	DocumentID uuid.UUID       `json:"document_d"`
+	Permission sql.NullString  `json:"permission"`
+}
+
 type User struct {
 	ID           uuid.UUID     `json:"id"`
 	Email        string        `json:"email"`

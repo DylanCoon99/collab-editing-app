@@ -11,18 +11,18 @@ import (
 )
 
 type Document struct {
-	ID        uuid.UUID
-	Title     string
-	OwnerID   uuid.NullUUID
-	Content   sql.NullString
-	CreatedAt sql.NullTime
-	UpdatedAt sql.NullTime
+	ID        uuid.UUID       `json:"id"`
+	Title     string          `json:"title"`
+	OwnerID   uuid.NullUUID   `json:"owner_id"`
+	Content   sql.NullString  `json:"content"`
+	CreatedAt sql.NullTime    `json:"created_at"`
+	UpdatedAt sql.NullTime    `json:"updated_at"`
 }
 
 type DocumentPermission struct {
-	UserID     uuid.UUID
-	DocumentID uuid.UUID
-	Permission sql.NullString
+	UserID     uuid.UUID       `json:"user_id"`
+	DocumentID uuid.UUID       `json:"document_d"`
+	Permission sql.NullString  `json:"permission"`
 }
 
 type User struct {
