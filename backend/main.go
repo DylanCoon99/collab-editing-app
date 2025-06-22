@@ -70,6 +70,7 @@ func main() {
     	// document endpoints
     	api.POST("/document", apiCfg.CreateDocument)
     	api.GET("/document/:document_id", apiCfg.GetDocumentById)
+    	api.PUT("/document/:document_id", apiCfg.UpdateDocumentContent)
 
 
     }

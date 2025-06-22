@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	//"encoding/json"
+	"database/sql"
 	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/auth"
@@ -18,6 +19,7 @@ type ApiConfig struct {
 }
 
 
+
 func Test(c *gin.Context) {
 
 	log.Println("Test endpoint")
@@ -28,7 +30,6 @@ func Test(c *gin.Context) {
     return
 
 } 
-
 
 
 
@@ -76,10 +77,6 @@ func (cfg *ApiConfig) CreateUser(c *gin.Context) {
 	return
 
 }
-
-
-// get user by email
-
 
 
 
@@ -131,7 +128,6 @@ func (cfg *ApiConfig) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 
 }
-
 
 
 
@@ -187,6 +183,7 @@ func (cfg *ApiConfig) GetDocumentById(c *gin.Context) {
 }
 
 
+
 // get documents for user
 func (cfg *ApiConfig) GetDocumentForUser(c *gin.Context) {
 
@@ -207,8 +204,6 @@ func (cfg *ApiConfig) GetDocumentForUser(c *gin.Context) {
 	}
 
 
-
-
 	documents, err := cfg.DBQueries.GetDocumentsForUser(c, user_uuid_nil)
 	
 	if err != nil {
@@ -225,7 +220,53 @@ func (cfg *ApiConfig) GetDocumentForUser(c *gin.Context) {
 
 // update document
 
+func (cfg *ApiConfig) UpdateDocumentContent(c *gin.Context) {
 
+
+	type UpdateContentRequest struct {
+		Content string `json:"content"`
+	}
+
+
+	var req UpdateContentRequest
+
+
+	document_id := c.Param("document_id")
+
+	document_uuid, err := uuid.Parse(document_id)
+
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse document id."})
+		return
+	}
+
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input", "details": err.Error()})
+		return
+	}
+
+
+	content_struct := sql.NullString {
+		String: req.Content,
+		Valid: true,
+	}
+
+
+	params := database.UpdateDocumentContentParams {
+		ID: document_uuid,
+		Content: content_struct,
+	}
+
+
+	cfg.DBQueries.UpdateDocumentContent(c, params)
+
+
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully updated document content."})
+
+	return
+}
 
 
 
