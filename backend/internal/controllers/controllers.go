@@ -85,9 +85,9 @@ func (cfg *ApiConfig) CreateUser(c *gin.Context) {
 // get user by id
 func (cfg *ApiConfig) GetUserById(c *gin.Context) {
 
-	user_uuid := c.Param("user_id")
+	user_id := c.Param("user_id")
 
-	user_id, err := uuid.Parse(user_uuid)
+	user_uuid, err := uuid.Parse(user_id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user id."})
@@ -95,10 +95,10 @@ func (cfg *ApiConfig) GetUserById(c *gin.Context) {
 	}
 
 
-	user, err := cfg.DBQueries.GetUserByID(c, user_id)
+	user, err := cfg.DBQueries.GetUserByID(c, user_uuid)
 	
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database."})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database for user."})
 		return
 	}
 
@@ -139,9 +139,9 @@ func (cfg *ApiConfig) CreateDocument(c *gin.Context) {
 // get document by id
 func (cfg *ApiConfig) GetDocumentById(c *gin.Context) {
 
-	document_uuid := c.Param("document_id")
+	document_id := c.Param("document_id")
 
-	document_id, err := uuid.Parse(document_uuid)
+	document_uuid, err := uuid.Parse(document_id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse document id."})
@@ -149,10 +149,10 @@ func (cfg *ApiConfig) GetDocumentById(c *gin.Context) {
 	}
 
 
-	document, err := cfg.DBQueries.GetDocumentByID(c, document_id)
+	document, err := cfg.DBQueries.GetDocumentByID(c, document_uuid)
 	
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database."})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database for document."})
 		return
 	}
 
@@ -162,6 +162,37 @@ func (cfg *ApiConfig) GetDocumentById(c *gin.Context) {
 
 
 // get documents for user
+func (cfg *ApiConfig) GetDocumentForUser(c *gin.Context) {
+
+	user_id := c.Param("user_id")
+
+	user_uuid, err := uuid.Parse(user_id)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse document id."})
+		return
+	}
+
+
+
+	user_uuid_nil := uuid.NullUUID {
+		UUID: user_uuid,
+		Valid: true,
+	}
+
+
+
+
+	documents, err := cfg.DBQueries.GetDocumentsForUser(c, user_uuid_nil)
+	
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database for documents."})
+		return
+	}
+
+	c.JSON(http.StatusOK, documents)
+
+}
 
 
 

@@ -65,10 +65,12 @@ func main() {
     	// user endpoints
     	api.POST("/user", apiCfg.CreateUser)
     	api.GET("/user/:user_id", apiCfg.GetUserById)
+    	api.GET("/user/:user_id/documents", apiCfg.GetDocumentForUser)
 
     	// document endpoints
     	api.POST("/document", apiCfg.CreateDocument)
     	api.GET("/document/:document_id", apiCfg.GetDocumentById)
+
 
     }
 
