@@ -72,6 +72,11 @@ func main() {
     	api.GET("/document/:document_id", apiCfg.GetDocumentById)
     	api.PUT("/document/:document_id", apiCfg.UpdateDocumentContent)
 
+    	// document permissions endpoints
+    	api.GET("/user/permissions", apiCfg.GetDocumentPermissions)  // get document permissions
+    	api.DELETE("/user/permissions", apiCfg.RemoveDocumentPermissions)
+    	api.POST("/user/permissions", apiCfg.ShareDocument)
+
 
     }
 
@@ -82,3 +87,7 @@ func main() {
 
 
 }
+
+
+
+

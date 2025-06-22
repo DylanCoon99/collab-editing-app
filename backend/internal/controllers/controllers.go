@@ -36,9 +36,8 @@ func Test(c *gin.Context) {
 // create user
 func (cfg *ApiConfig) CreateUser(c *gin.Context) {
 
-
 	type request struct {
-		Password string `json:password`
+		Password string `json:"password"`
 		Email    string `json:"email"`
 	}
 
@@ -217,7 +216,6 @@ func (cfg *ApiConfig) GetDocumentForUser(c *gin.Context) {
 
 
 
-
 // update document
 
 func (cfg *ApiConfig) UpdateDocumentContent(c *gin.Context) {
@@ -271,14 +269,188 @@ func (cfg *ApiConfig) UpdateDocumentContent(c *gin.Context) {
 
 
 // get document permissions
+func (cfg *ApiConfig) GetDocumentPermissions(c *gin.Context) {
+
+
+	/*
+
+		type GetDocumentPermissionParams struct {
+		UserID     uuid.UUID
+		DocumentID uuid.UUID
+	}
+
+
+	*/
+
+
+
+	user_id := c.Query("user_id")
+	document_id := c.Query("document_id")
+
+	if document_id == "" || user_id ==  "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User ID and Document ID query parameters required"})
+		return
+	}
+
+
+	user_uuid, err := uuid.Parse(user_id)
+
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user id."})
+		return
+	}
+
+
+	document_uuid, err := uuid.Parse(document_id)
+
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse document id."})
+		return
+	}
+
+
+	params := database.GetDocumentPermissionParams {
+		UserID: user_uuid,
+		DocumentID: document_uuid,
+	}
+
+
+
+	permissions, err := cfg.DBQueries.GetDocumentPermission(c, params)
+	
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database for permissions."})
+		return
+	}
+
+	c.JSON(http.StatusOK, permissions)
+
+
+}
+
+
+
+
 
 
 
 // remove document permissions
+func (cfg *ApiConfig) RemoveDocumentPermissions(c *gin.Context) {
+
+
+	type RemoveDocumentPermissionsRequest struct {
+		UserID string      `json:"user_id"`
+		DocumentID string  `json:"document_id"`
+	}
+
+
+	var req RemoveDocumentPermissionsRequest
+
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input", "details": err.Error()})
+		return
+	}
+
+
+
+	user_uuid, err := uuid.Parse(req.UserID)
+	document_uuid, err := uuid.Parse(req.DocumentID)
+
+	params := database.RemoveDocumentPermissionParams {
+		UserID: user_uuid,
+		DocumentID: document_uuid,
+	}
+
+	err = cfg.DBQueries.RemoveDocumentPermission(c, params)
+
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove permissions from database."})
+		return
+	}
+
+
+	c.JSON(http.StatusNoContent, gin.H{"message": "Successfully removed permissions from database."})
+
+	return
+
+}
+
+
+/*
+
+type ShareDocumentParams struct {
+	UserID     uuid.UUID
+	DocumentID uuid.UUID
+	Permission sql.NullString
+}
+
+func (q *Queries) ShareDocument(ctx context.Context, arg ShareDocumentParams) error {
+	_, err := q.db.ExecContext(ctx, shareDocument, arg.UserID, arg.DocumentID, arg.Permission)
+	return err
+}
+
+
+*/
+
+
 
 
 
 // share documents
+func (cfg *ApiConfig) ShareDocument(c *gin.Context){
 
+	type ShareDocumentRequest struct {
+		UserID string      `json:"user_id"`
+		DocumentID string  `json:"document_id"`
+		Permission string  `json:"permission"`
+	}
+
+
+	var req ShareDocumentRequest
+
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input", "details": err.Error()})
+		return
+	}
+
+
+	user_uuid, err := uuid.Parse(req.UserID)
+	document_uuid, err := uuid.Parse(req.DocumentID)
+
+
+	perm_struct := sql.NullString {
+		String: req.Permission,
+		Valid: true,
+	}
+
+
+
+	params := database.ShareDocumentParams {
+		UserID: user_uuid,
+		DocumentID: document_uuid,
+		Permission: perm_struct,
+	}
+
+	err = cfg.DBQueries.ShareDocument(c, params)
+
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Successfully added permissions from database."})
+
+	return
+
+
+
+}
 
 
