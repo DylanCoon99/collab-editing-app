@@ -380,28 +380,10 @@ func (cfg *ApiConfig) RemoveDocumentPermissions(c *gin.Context) {
 }
 
 
-/*
-
-type ShareDocumentParams struct {
-	UserID     uuid.UUID
-	DocumentID uuid.UUID
-	Permission sql.NullString
-}
-
-func (q *Queries) ShareDocument(ctx context.Context, arg ShareDocumentParams) error {
-	_, err := q.db.ExecContext(ctx, shareDocument, arg.UserID, arg.DocumentID, arg.Permission)
-	return err
-}
-
-
-*/
-
-
-
 
 
 // share documents
-func (cfg *ApiConfig) ShareDocument(c *gin.Context){
+func (cfg *ApiConfig) ShareDocument(c *gin.Context) {
 
 	type ShareDocumentRequest struct {
 		UserID string      `json:"user_id"`
@@ -452,5 +434,6 @@ func (cfg *ApiConfig) ShareDocument(c *gin.Context){
 
 
 }
+
 
 

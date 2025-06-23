@@ -77,6 +77,9 @@ func main() {
     	api.DELETE("/user/permissions", apiCfg.RemoveDocumentPermissions)
     	api.POST("/user/permissions", apiCfg.ShareDocument)
 
+    	// login and register endpoints
+    	api.POST("/login", apiCfg.Login)
+ 		api.POST("/register", apiCfg.Register)
 
     }
 
