@@ -19,9 +19,9 @@ RETURNING id, title, owner_id, content, created_at, updated_at
 `
 
 type CreateDocumentParams struct {
-	Title   string         `json:"title"`
-	OwnerID uuid.NullUUID  `json:"owner_id"`
-	Content sql.NullString `json:"content"`
+	Title   string
+	OwnerID uuid.NullUUID
+	Content sql.NullString
 }
 
 func (q *Queries) CreateDocument(ctx context.Context, arg CreateDocumentParams) (Document, error) {

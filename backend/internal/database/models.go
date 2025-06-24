@@ -31,3 +31,5 @@ type User struct {
 	PasswordHash string        `json:"hashed_password"`
 	CreatedAt    sql.NullTime  `json:"created_at"`
 }
+
+

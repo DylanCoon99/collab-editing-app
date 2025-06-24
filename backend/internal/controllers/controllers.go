@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/auth"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/database"
+	"github.com/DylanCoon99/collab-editing-app/backend/internal/utils"
 )
 
 
@@ -139,14 +140,19 @@ func (cfg *ApiConfig) GetDocumentById(c *gin.Context) {
 func (cfg *ApiConfig) GetDocumentForCurrentUser(c *gin.Context) {
 
 	// get user email
-
-
-	// use user email for getting user id
-
-	user_uuid, err := uuid.Parse(user_id)
+	email, err := utils.ExtractTokenEmail(c)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse document id."})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get current user."})
+		return
+	}
+
+	// use user email for getting user id
+	user_uuid, err := cfg.DBQueries.GetUserIDByEmail(c, email)
+
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get uuid for current user."})
 		return
 	}
 
