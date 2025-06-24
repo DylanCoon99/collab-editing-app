@@ -84,15 +84,57 @@ func (cfg *ApiConfig) CreateUser(c *gin.Context) {
 
 
 // create document
-func (cfg *ApiConfig) CreateDocument(c *gin.Context) {
+func (cfg *ApiConfig) CreateDocumentForCurrentUser(c *gin.Context) {
 
+	type CreateDocumentRequest struct {
+		Title   string `json:"title"`
+		Content string `json:"content"`
+	}
 
-	var params database.CreateDocumentParams
+	var req CreateDocumentRequest
 
-	if err := c.ShouldBindJSON(&params); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input", "details": err.Error()})
 		return
 	}
+
+
+	// get user email
+	email, err := utils.ExtractTokenEmail(c)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get current user."})
+		return
+	}
+
+	// use user email for getting user id
+	user_uuid, err := cfg.DBQueries.GetUserIDByEmail(c, email)
+
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get uuid for current user."})
+		return
+	}
+
+
+	user_uuid_nil := uuid.NullUUID {
+		UUID: user_uuid,
+		Valid: true,
+	}
+
+
+	content := sql.NullString {
+		String: req.Content,
+		Valid: true,
+	}
+
+
+	params := database.CreateDocumentParams {
+		Title: req.Title,
+		OwnerID: user_uuid_nil,
+		Content: content,
+	}
+
 
 
 	document, err := cfg.DBQueries.CreateDocument(c, params)
