@@ -2,7 +2,7 @@ package utils
 
 
 import (
-	"log"
+	//"log"
 	"fmt"
 	"os"
 	"strconv"
@@ -14,7 +14,7 @@ import (
 )
 
 
-func GenerateToken(username string) (string, error) {
+func GenerateToken(email string) (string, error) {
 
 	token_lifespan, err := strconv.Atoi(os.Getenv("TOKEN_HOUR_LIFESPAN"))
 
@@ -24,7 +24,7 @@ func GenerateToken(username string) (string, error) {
 
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
-	claims["username"] = username
+	claims["email"] = email
 	claims["exp"] = time.Now().Add(time.Hour * time.Duration(token_lifespan)).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
@@ -59,25 +59,28 @@ func ExtractToken(c *gin.Context) string {
 	return ""
 }
 
-func ExtractTokenUsername(c *gin.Context) (uint, error) {
-
+func ExtractTokenEmail(c *gin.Context) (string, error) {
 	tokenString := ExtractToken(c)
+
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 		return []byte(os.Getenv("API_SECRET")), nil
 	})
+
 	if err != nil {
-		return 0, err
+		return "", err
 	}
+
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok && token.Valid {
-		uid, err := strconv.ParseUint(fmt.Sprintf("%.0f", claims["username"]), 10, 32)
-		if err != nil {
-			return 0, err
+		email, ok := claims["email"].(string)
+		if !ok {
+			return "", fmt.Errorf("Email claim not found or invalid")
 		}
-		return uint(uid), nil
+		return email, nil
 	}
-	return 0, nil
+
+	return "", fmt.Errorf("Invalid token")
 }

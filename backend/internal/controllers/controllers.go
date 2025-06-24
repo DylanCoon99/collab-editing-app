@@ -79,54 +79,6 @@ func (cfg *ApiConfig) CreateUser(c *gin.Context) {
 
 
 
-// get user by id
-func (cfg *ApiConfig) GetUser(c *gin.Context) {
-
-	user_id := c.Query("user_id")
-	email := c.Query("email")
-
-	if email == "" && user_id ==  "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Email or User ID query parameters required"})
-		return
-	}
-
-
-	if user_id != "" {
-
-		user_uuid, err := uuid.Parse(user_id)
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user id."})
-			return
-		}
-
-
-		user, err := cfg.DBQueries.GetUserByID(c, user_uuid)
-		
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database for user."})
-			return
-		}
-
-		c.JSON(http.StatusOK, user)
-
-		return
-	}
-
-
-	// otherwise query by email
-
-
-	user, err := cfg.DBQueries.GetUserByEmail(c, email)
-	
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database for user."})
-		return
-	}
-
-	c.JSON(http.StatusOK, user)
-
-}
 
 
 

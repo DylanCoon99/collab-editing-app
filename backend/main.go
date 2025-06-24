@@ -12,6 +12,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/database"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/controllers"
+	"github.com/DylanCoon99/collab-editing-app/backend/internal/middleware"
 
 )
 
@@ -64,7 +65,7 @@ func main() {
 
     	// user endpoints
     	api.POST("/user", apiCfg.CreateUser)
-    	api.GET("/user", apiCfg.GetUser)
+    	api.GET("/user", apiCfg.CurrentUser)
     	api.GET("/user/:user_id/documents", apiCfg.GetDocumentForUser)
 
     	// document endpoints
@@ -77,10 +78,16 @@ func main() {
     	api.DELETE("/user/permissions", apiCfg.RemoveDocumentPermissions)
     	api.POST("/user/permissions", apiCfg.ShareDocument)
 
-    	// login and register endpoints
-    	api.POST("/login", apiCfg.Login)
- 		api.POST("/register", apiCfg.Register)
+    }
 
+    api.Use(middleware.JwtAuthMiddleware())
+
+
+    public := r.Group("/auth")
+    {
+    	// login and register endpoints
+    	public.POST("/login", apiCfg.Login)
+ 		public.POST("/register", apiCfg.Register)
     }
 
 

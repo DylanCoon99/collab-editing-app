@@ -17,6 +17,8 @@ import (
 
 
 
+
+
 func HashPassword(password string) (string, error) {
 
 	hashed_password, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

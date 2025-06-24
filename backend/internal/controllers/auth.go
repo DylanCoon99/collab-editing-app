@@ -5,6 +5,7 @@ import (
 	"log"
 	"errors"
 	"net/http"
+	//"strconv"
 	//"encoding/json"
 	//"database/sql"
 	//"github.com/google/uuid"
@@ -17,13 +18,35 @@ import (
 
 
 
-
 type RegisterLoginInput struct {
 	Email string `json"email" binding:"required"`
 	Password string `json"password" binding:"required"`
 }
 
 
+
+func (cfg *ApiConfig) CurrentUser(c *gin.Context) {
+	email, err := utils.ExtractTokenEmail(c)
+
+
+
+	log.Printf("here is the email: %v", email)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(), "message": "error in current user line 34"})
+		return
+	}
+
+	user, err := cfg.DBQueries.GetUserByEmail(c, email)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(), "message": "error in current user line 31"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "success", "data": user})
+
+}
 
 
 
@@ -75,7 +98,6 @@ func (cfg *ApiConfig) VerifyLogin(input RegisterLoginInput, c *gin.Context) (str
 
 	token, err := utils.GenerateToken(input.Email)
 
-	log.Printf("%v", err)
 
 	if err != nil {
 		return "", err
