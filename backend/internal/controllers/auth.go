@@ -2,7 +2,7 @@ package controllers
 
 
 import (
-	"log"
+	//"log"
 	"errors"
 	"net/http"
 	//"strconv"
@@ -30,17 +30,16 @@ func (cfg *ApiConfig) CurrentUser(c *gin.Context) {
 
 
 
-	log.Printf("here is the email: %v", email)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(), "message": "error in current user line 34"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	user, err := cfg.DBQueries.GetUserByEmail(c, email)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(), "message": "error in current user line 31"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

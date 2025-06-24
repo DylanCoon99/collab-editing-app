@@ -136,9 +136,12 @@ func (cfg *ApiConfig) GetDocumentById(c *gin.Context) {
 
 
 // get documents for user
-func (cfg *ApiConfig) GetDocumentForUser(c *gin.Context) {
+func (cfg *ApiConfig) GetDocumentForCurrentUser(c *gin.Context) {
 
-	user_id := c.Param("user_id")
+	// get user email
+
+
+	// use user email for getting user id
 
 	user_uuid, err := uuid.Parse(user_id)
 
