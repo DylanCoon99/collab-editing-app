@@ -37,13 +37,15 @@ function LoginSection() {
       const result = await res.json();
 
       if (res.ok) {
-        setAlert({ show: true, message: 'Message sent! I look forward to speaking with you.', variant: 'success' });
+        const token = result.token; // ✅ Extract token
+        localStorage.setItem('token', token); // ✅ Store token in localStorage
+        setAlert({ show: true, message: 'Login successful!', variant: 'success' });
         setFormData({ email: '', password: '' });
       } else {
-        setAlert({ show: true, message: result.message || 'Failed to send message.', variant: 'danger' });
+        setAlert({ show: true, message: 'Failed to get token', variant: 'danger' });
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error signing in:', error);
       setAlert({ show: true, message: 'Something went wrong. Please try again later.', variant: 'danger' });
     }
 
@@ -64,11 +66,11 @@ function LoginSection() {
             )}
 
             <Form onSubmit={handleSubmit}>
-              <Form.Group className="mb-3" controlId="name">
+              <Form.Group className="mb-3" controlId="email">
                 <Form.Label><FaUser className="me-2" />Email</Form.Label>
                 <Form.Control
 
-                  type="text"
+                  type="email"
                   value={formData.email}
                   onChange={handleChange}
                   disabled={isSubmitting}
@@ -94,7 +96,7 @@ function LoginSection() {
                 className="w-100 rounded-pill"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Logging in...' : 'Failed to send message'}
+                {isSubmitting ? 'Logging in...' : 'Login'}
               </Button>
             </Form>
           </Card.Body>
