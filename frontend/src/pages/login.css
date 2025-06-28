@@ -1,0 +1,32 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #1c1c1c !important; /* 👈 Example: Navy blue (Option 1) */
+}
+
+.navbar {
+  display: flex;
+  gap: 1rem;
+  background: #333;
+  padding: 1rem;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+}
+
+section {
+  padding: 2rem;
+}
+
+h2 {
+  margin-top: 0;
+  color: #ffffff !important;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #dddddd;
+}

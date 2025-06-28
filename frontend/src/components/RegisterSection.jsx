@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Card, Form, Button, Alert, Row, Col } from 'react-bootstrap';
 import { FaUser, FaEnvelope, FaCommentDots } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
 
 
-function LoginSection() {
+function RegisterSection() {
 
   const navigate = useNavigate();
 
@@ -33,8 +32,10 @@ function LoginSection() {
     setIsSubmitting(true);
     setAlert({ show: false, message: '', variant: '' });
 
+
+
     try {
-      const res = await fetch('http://localhost:8080/auth/login', {
+      const res = await fetch('http://localhost:8080/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -43,21 +44,25 @@ function LoginSection() {
       const result = await res.json();
 
       if (res.ok) {
-        const token = result.token; // Extract token
-        localStorage.setItem('token', token); // Store token in localStorage
-        setAlert({ show: true, message: 'Login successful!', variant: 'success' });
+          
+
+        // navigate user to the login page
+        setAlert({ show: true, message: 'Account creation successful!', variant: 'success' });
         setTimeout(() => {
-          navigate('/home'); // redirect after success
+          navigate('/login'); // redirect after success
         }, 800);
+
+
       } else {
-        setAlert({ show: true, message: 'Failed to get token', variant: 'danger' });
+        setAlert({ show: true, message: 'Failed to create account', variant: 'danger' });
       }
     } catch (error) {
-      console.error('Error signing in:', error);
+      console.error('Error creating account:', error);
       setAlert({ show: true, message: 'Something went wrong. Please try again later.', variant: 'danger' });
     }
 
     setIsSubmitting(false);
+
   };
 
   return (
@@ -65,7 +70,7 @@ function LoginSection() {
       <Container style={{ maxWidth: '600px', color: '#ffffff'}}>
         <Card style={{ backgroundColor: '#505050', color: 'white', border: 'none', borderRadius: '12px'}}>
           <Card.Body>
-            <h2 className="mb-4 text-center fw-bold">Sign In</h2>
+            <h2 className="mb-4 text-center fw-bold">Create Account</h2>
 
             {alert.show && (
               <Alert variant={alert.variant} onClose={() => setAlert({ ...alert, show: false })} dismissible>
@@ -104,17 +109,9 @@ function LoginSection() {
                 className="w-100 rounded-pill"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Logging in...' : 'Login'}
+                {isSubmitting ? 'Creating Account...' : 'Create Account'}
               </Button>
             </Form>
-            <div className="text-center mt-3">
-              <span>Don't have an account? </span>
-              <Link to="/register" style={{ color: '#0d6efd', fontWeight: 'bold' }}>
-                Create one
-              </Link>
-            </div>
-
-
           </Card.Body>
         </Card>
       </Container>
@@ -122,4 +119,4 @@ function LoginSection() {
   );
 }
 
-export default LoginSection;
+export default RegisterSection;
