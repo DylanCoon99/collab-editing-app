@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from "react";
+import "./DocumentList.css"; // Add your custom CSS file
+import { Link } from 'react-router-dom';
+
 
 export default function DocumentList() {
   const [documents, setDocuments] = useState([]);
@@ -32,23 +35,23 @@ export default function DocumentList() {
   }, []);
 
   return (
-    <section id="documents" style={{ padding: "4rem" }}>
-      <h2 style={{ textAlign: "center", marginBottom: "2rem" }}>My Documents</h2>
+    <section id="documents" className="document-section">
+      <h2>My Documents</h2>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
 
-      {documents.length === 0 ? (
-        <p>No documents found.</p>
-      ) : (
-        <ul className="document-list" style={{ listStyle: "none", padding: 0 }}>
-          {documents.map((document) => (
-            <li key={document.id} className="document-item" style={{ marginBottom: "1.5rem" }}>
-              <h3>{document.title}</h3>
-              <p>Created at: {new Date(document.created_at.Time).toLocaleString()}</p>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="document-grid">
+        {documents.length === 0 ? (
+          <p>No documents found.</p>
+        ) : (
+          documents.map((doc) => (
+            <Link to={`/document/${doc.id}`} className="document-tile">
+              <h3>{doc.title}</h3>
+              <p>{new Date(doc.created_at.Time).toLocaleDateString()}</p>
+            </Link>
+          ))
+        )}
+      </div>
 
     </section>
   );
