@@ -6,6 +6,7 @@ export default function DocumentEditor() {
   const [doc, setDoc] = useState(null);
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
 
   useEffect(() => {
     const fetchDoc = async () => {
@@ -35,6 +36,33 @@ export default function DocumentEditor() {
     setContent(e.target.value);
   };
 
+  const handleSave = async () => {
+    const token = localStorage.getItem('token');
+    setStatus('');
+
+    try {
+      const res = await fetch(`http://localhost:8080/api/document/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          content: content,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to save');
+      }
+
+      setStatus('✅ Document saved successfully');
+    } catch (err) {
+      console.error(err);
+      setStatus('❌ Failed to save document');
+    }
+  };
+
   return (
     <div style={{ padding: '2rem', background: '#1c1c1c', color: '#fff', minHeight: '100vh' }}>
       {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -46,7 +74,7 @@ export default function DocumentEditor() {
             onChange={handleContentChange}
             style={{
               width: '100%',
-              height: '80vh',
+              height: '70vh',
               marginTop: '1rem',
               padding: '1rem',
               fontSize: '1rem',
@@ -57,6 +85,25 @@ export default function DocumentEditor() {
               borderRadius: '8px',
             }}
           />
+          <div style={{ marginTop: '1rem' }}>
+            <button
+              onClick={handleSave}
+              style={{
+                padding: '0.75rem 1.5rem',
+                fontSize: '1rem',
+                background: '#007bff',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+              }}
+            >
+              Save
+            </button>
+            {status && (
+              <span style={{ marginLeft: '1rem', color: '#ccc' }}>{status}</span>
+            )}
+          </div>
         </>
       ) : (
         <p>Loading document...</p>
