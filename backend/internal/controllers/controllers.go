@@ -389,7 +389,7 @@ func (cfg *ApiConfig) RemoveDocumentPermissions(c *gin.Context) {
 func (cfg *ApiConfig) ShareDocument(c *gin.Context) {
 
 	type ShareDocumentRequest struct {
-		UserID string      `json:"user_id"`
+		Email string       `json:"email"`
 		DocumentID string  `json:"document_id"`
 		Permission string  `json:"permission"`
 	}
@@ -403,9 +403,20 @@ func (cfg *ApiConfig) ShareDocument(c *gin.Context) {
 		return
 	}
 
-
-	user_uuid, err := uuid.Parse(req.UserID)
 	document_uuid, err := uuid.Parse(req.DocumentID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse document uuid from request", "details": err.Error()})
+		return
+	}
+
+
+	user_uuid, err := cfg.DBQueries.GetUserIDByEmail(c, req.Email)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get uuid from email.", "details": err.Error()})
+		return
+	}
 
 
 	perm_struct := sql.NullString {
@@ -430,10 +441,9 @@ func (cfg *ApiConfig) ShareDocument(c *gin.Context) {
 	}
 
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Successfully added permissions from database."})
+	c.JSON(http.StatusCreated, gin.H{"message": "Successfully added permissions to database."})
 
 	return
-
 
 
 }

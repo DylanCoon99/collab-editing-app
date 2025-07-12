@@ -17,3 +17,9 @@ WHERE d.owner_id = $1 OR p.user_id = $1;
 UPDATE documents
 SET content = $2, updated_at = NOW()
 WHERE id = $1;
+
+
+-- name: GetOwnerIDByDocumentID :one
+SELECT owner_id
+FROM documents
+WHERE id = $1;
