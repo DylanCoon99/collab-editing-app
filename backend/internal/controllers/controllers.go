@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/auth"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/database"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/utils"
@@ -17,6 +18,7 @@ import (
 
 type ApiConfig struct {
 	DBQueries *database.Queries
+	Upgrader *websocket.Upgrader
 }
 
 

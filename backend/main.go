@@ -1,24 +1,21 @@
 package main
 
 import (
-	"os"
+	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"time"
-	"database/sql"
-	_ "github.com/lib/pq"
-	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/cors"
-	"github.com/joho/godotenv"
-	"github.com/DylanCoon99/collab-editing-app/backend/internal/database"
+	"net/http"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/controllers"
+	"github.com/DylanCoon99/collab-editing-app/backend/internal/database"
 	"github.com/DylanCoon99/collab-editing-app/backend/internal/middleware"
-
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
-
-
-
-
 
 func main() {
 
@@ -39,65 +36,69 @@ func main() {
 
 	dbQueries := database.New(db)
 
-
 	var apiCfg controllers.ApiConfig
 	apiCfg.DBQueries = dbQueries
 
 
+	var upgrader = websocket.Upgrader{
+		ReadBufferSize: 1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+
+
+
+	apiCfg.Upgrader = &upgrader
 
 	// gin server setup
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-        AllowOrigins:     []string{"http://localhost:8080", "http://localhost:5173", "http://localhost:3000"},
-        AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-        AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-        ExposeHeaders:    []string{"Content-Length"},
-        AllowCredentials: true,
-        MaxAge:           12 * time.Hour,
-    }))
+		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:5173", "http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
+	api := r.Group("/api")
+	{
+		//test endpoint
+		api.GET("/test", controllers.Test)
 
-    api := r.Group("/api")
-    {
-    	//test endpoint
-    	api.GET("/test", controllers.Test)
+		// user endpoints
+		api.POST("/user", apiCfg.CreateUser)
+		api.GET("/user", apiCfg.CurrentUser)
+		api.GET("/user/documents", apiCfg.GetDocumentForCurrentUser)
 
-    	// user endpoints
-    	api.POST("/user", apiCfg.CreateUser)
-    	api.GET("/user", apiCfg.CurrentUser)
-    	api.GET("/user/documents", apiCfg.GetDocumentForCurrentUser)
+		// document endpoints
+		api.POST("/document", apiCfg.CreateDocumentForCurrentUser)
+		api.GET("/document/:document_id", apiCfg.GetDocumentById)
+		api.PUT("/document/:document_id", apiCfg.UpdateDocumentContent)
 
-    	// document endpoints
-    	api.POST("/document", apiCfg.CreateDocumentForCurrentUser)
-    	api.GET("/document/:document_id", apiCfg.GetDocumentById)
-    	api.PUT("/document/:document_id", apiCfg.UpdateDocumentContent)
+		// document permissions endpoints
+		api.GET("/user/permissions", apiCfg.GetDocumentPermissions) // get document permissions
+		api.DELETE("/user/permissions", apiCfg.RemoveDocumentPermissions)
+		api.POST("/user/permissions", apiCfg.ShareDocument)
 
-    	// document permissions endpoints
-    	api.GET("/user/permissions", apiCfg.GetDocumentPermissions)  // get document permissions
-    	api.DELETE("/user/permissions", apiCfg.RemoveDocumentPermissions)
-    	api.POST("/user/permissions", apiCfg.ShareDocument)
+		api.GET("/ws", apiCfg.HandleWebSocket)
 
-    }
+	}
 
-    api.Use(middleware.JwtAuthMiddleware())
+	api.Use(middleware.JwtAuthMiddleware())
 
+	public := r.Group("/auth")
+	{
+		// login and register endpoints
+		public.POST("/login", apiCfg.Login)
+		public.POST("/register", apiCfg.Register)
+	}
 
-    public := r.Group("/auth")
-    {
-    	// login and register endpoints
-    	public.POST("/login", apiCfg.Login)
- 		public.POST("/register", apiCfg.Register)
-    }
+	log.Println("Server starting on port 8080...")
 
-
-    log.Println("Server starting on port 8080...")
-
-    log.Fatal(r.Run(":8080"))
-
+	log.Fatal(r.Run(":8080"))
 
 }
-
-
-
-
