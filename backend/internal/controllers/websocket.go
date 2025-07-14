@@ -47,14 +47,7 @@ var manager = &Manager{
 
 
 func (cfg *ApiConfig) HandleWebSocket(c *gin.Context) {
-	ws, err := cfg.Upgrader.Upgrade(c.Writer, c.Request, nil)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create websocket.", "details": err.Error()})
-		return
-	}
-
-	defer ws.Close()
+	
 
 	document_id := c.Query("doc_id") // get this from the ws url endpoint that is in the request
 	user_id := c.Query("user_id")
@@ -72,6 +65,17 @@ func (cfg *ApiConfig) HandleWebSocket(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user id."})
 		return
 	}
+
+
+
+	ws, err := cfg.Upgrader.Upgrade(c.Writer, c.Request, nil)
+
+	if err != nil {
+		log.Printf("Websocket upgrader error:", err)
+		return
+	}
+
+	defer ws.Close()
 
 	manager.mu.Lock()
 	doc, ok := manager.Documents[document_uuid]
@@ -99,6 +103,7 @@ func (cfg *ApiConfig) HandleWebSocket(c *gin.Context) {
 
 	doc.mu.Lock()
 	doc.Clients[user_uuid] = client
+	//log.Println("CLIENT CREATED.")
 	doc.mu.Unlock()
 
 
@@ -133,6 +138,7 @@ func (c *Client) readMessages(ctx context.Context) {
 			return
 		default:
 			_, message, err := c.Conn.ReadMessage()
+			//log.Printf("MESSAGE RECEIVED: %v", message)
 			if err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 					log.Printf("Websocket read error: %v", err)
@@ -191,4 +197,8 @@ func (d *Document) runBroadcaster() {
 		d.mu.Unlock()
 	}
 }
+
+
+
+
 
