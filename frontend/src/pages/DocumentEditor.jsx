@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import WebsocketComponent from '../components/WebSocketComponent';
 
 export default function DocumentEditor() {
   const { id } = useParams();
@@ -64,6 +65,7 @@ export default function DocumentEditor() {
   };
 
   return (
+
     <div style={{ padding: '2rem', background: '#1c1c1c', color: '#fff', minHeight: '100vh' }}>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {doc ? (
@@ -108,6 +110,12 @@ export default function DocumentEditor() {
       ) : (
         <p>Loading document...</p>
       )}
+      <div>
+        <WebsocketComponent
+          doc_id ={id}
+          user_id ={"a64f0a7a-5119-409d-b111-157255dc0eaf"}
+        />
+      </div>
     </div>
   );
 }
