@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import WebsocketComponent from '../components/WebSocketComponent';
+import WebSocketComponent from '../components/WebSocketComponent';
 
 export default function DocumentEditor() {
   const { id } = useParams();
@@ -8,10 +8,39 @@ export default function DocumentEditor() {
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
+  const [userId, setUserId] = useState(null);
 
+  // Fetch current user
+  const fetchCurrentUser = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('No authentication token found');
+      return;
+    }
+
+    try {
+      const res = await fetch('http://localhost:8080/api/user', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to fetch user');
+
+      setUserId(data.data.id); // Parse user ID from data.id
+    } catch (err) {
+      console.error('Error fetching user:', err);
+      setError('Failed to fetch user information');
+    }
+  };
+
+  // Fetch document
   useEffect(() => {
     const fetchDoc = async () => {
       const token = localStorage.getItem('token');
+      if (!token) {
+        setError('No authentication token found');
+        return;
+      }
 
       try {
         const res = await fetch(`http://localhost:8080/api/document/${id}`, {
@@ -19,18 +48,18 @@ export default function DocumentEditor() {
         });
 
         const data = await res.json();
-
-        if (!res.ok) throw new Error(data.message || 'Failed to fetch');
+        if (!res.ok) throw new Error(data.message || 'Failed to fetch document');
 
         setDoc(data);
         setContent(data.content.String || '');
       } catch (err) {
-        console.error(err);
+        console.error('Error fetching document:', err);
         setError('Failed to load document');
       }
     };
 
     fetchDoc();
+    fetchCurrentUser(); // Fetch user on component mount
   }, [id]);
 
   const handleContentChange = (e) => {
@@ -59,16 +88,19 @@ export default function DocumentEditor() {
 
       setStatus('✅ Document saved successfully');
     } catch (err) {
-      console.error(err);
+      console.error('Error saving document:', err);
       setStatus('❌ Failed to save document');
     }
   };
 
-  return (
+  const handleWebSocketMessage = (newContent) => {
+    setContent(newContent); // Update textarea with WebSocket message
+  };
 
+  return (
     <div style={{ padding: '2rem', background: '#1c1c1c', color: '#fff', minHeight: '100vh' }}>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {doc ? (
+      {doc && userId ? (
         <>
           <h2>{doc.title}</h2>
           <textarea
@@ -106,16 +138,15 @@ export default function DocumentEditor() {
               <span style={{ marginLeft: '1rem', color: '#ccc' }}>{status}</span>
             )}
           </div>
+          <WebSocketComponent
+            doc_id={id}
+            user_id={userId}
+            onMessage={handleWebSocketMessage}
+          />
         </>
       ) : (
-        <p>Loading document...</p>
+        <p>Loading document{userId ? '' : ' and user'}...</p>
       )}
-      <div>
-        <WebsocketComponent
-          doc_id ={id}
-          user_id ={"a64f0a7a-5119-409d-b111-157255dc0eaf"}
-        />
-      </div>
     </div>
   );
 }

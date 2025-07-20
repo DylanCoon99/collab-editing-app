@@ -67,6 +67,7 @@ func (cfg *ApiConfig) HandleWebSocket(c *gin.Context) {
 	}
 
 
+	// when a client clicks on a document, a ws is created here
 
 	ws, err := cfg.Upgrader.Upgrade(c.Writer, c.Request, nil)
 
@@ -77,9 +78,13 @@ func (cfg *ApiConfig) HandleWebSocket(c *gin.Context) {
 
 	defer ws.Close()
 
+
+	// at this point, the document in question is added to the manager if it is not already there
+
 	manager.mu.Lock()
 	doc, ok := manager.Documents[document_uuid]
 
+	// if not ok, the doc is created and added to the manager
 	if !ok {
 		doc = &Document{
 			DocID:     document_uuid,
@@ -87,10 +92,14 @@ func (cfg *ApiConfig) HandleWebSocket(c *gin.Context) {
 			Broadcast: make(chan []byte, 256),  // make a buffered channel
 		}
 		manager.Documents[document_uuid] = doc
+
+		// after the doc is created, broadcast all changes to the document to every user using the document
 		go doc.runBroadcaster()
 	}
 	manager.mu.Unlock()
 
+
+	// create a client
 
 	client := &Client{
 		Conn:     ws,
@@ -100,10 +109,11 @@ func (cfg *ApiConfig) HandleWebSocket(c *gin.Context) {
 	}
 
 
+	// add the client to the document's client map
 
 	doc.mu.Lock()
 	doc.Clients[user_uuid] = client
-	//log.Println("CLIENT CREATED.")
+	log.Println("CLIENT CREATED.")
 	doc.mu.Unlock()
 
 
@@ -158,18 +168,26 @@ func (c *Client) writeMessages(ctx context.Context) {
 
 	// sends messages to the client via the websocket connection
 
-	defer c.Conn.Close()
+	defer func() {
+		log.Printf("Client %s has stopped writing messages.", c.UserID.String())
+		c.Conn.Close()
+	}()
 
 	for {
 		select {
 		case <- ctx.Done():
 			return
-		case message := <-c.Send:
+		case message, ok := <-c.Send:
+			if !ok {
+				log.Printf("Send channel close for client %s", c.UserID.String())
+				return
+			}
 			err := c.Conn.WriteMessage(websocket.TextMessage, message)
 			if err != nil {
 				log.Printf("Websocket write error: %v", err)
 				return
 			}
+			log.Printf("Message sent to client %s: %s", c.UserID.String(), string(message))
 		}
 	}
 
@@ -180,17 +198,32 @@ func (c *Client) writeMessages(ctx context.Context) {
 
 // broadcasts all message for a document to every client using the document
 func (d *Document) runBroadcaster() {
+
+	defer func() {
+		d.mu.Lock()
+		for _, client := range d.Clients {
+			close(client.Send)
+		}
+		d.mu.Unlock()
+		log.Printf("Broadcaster stopped for document %s", d.DocID.String())
+	}()
+
+
 	for message := range d.Broadcast {
 		d.mu.Lock()
 
 		// for every client using the document
-		for _, client := range d.Clients {
+		for userID, client := range d.Clients {
 			// send to the client's send channel
 			select {
 			case client.Send <- message:
 				// successfully sent the message to the client
+				log.Printf("Message broadcast to client %s in document %s", userID.String(), d.DocID.String())
 			default:
-				log.Printf("Message failed to sent to client %v", client.UserID)
+				log.Printf("Send channel full for client %s in document %s", client.UserID.String(), d.DocID.String())
+				delete(d.Clients, userID)
+				close(client.Send)
+				client.Conn.Close()
 			}
 		}
 
@@ -199,6 +232,6 @@ func (d *Document) runBroadcaster() {
 }
 
 
-
+// need a function for reading messages on a client's 
 
 
