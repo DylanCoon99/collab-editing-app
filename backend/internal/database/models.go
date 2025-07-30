@@ -10,25 +10,24 @@ import (
 	"github.com/google/uuid"
 )
 
-
 type Document struct {
-	ID        uuid.UUID       `json:"id"`
-	Title     string          `json:"title"`
-	OwnerID   uuid.NullUUID   `json:"owner_id"`
-	Content   sql.NullString  `json:"content"`
-	CreatedAt sql.NullTime    `json:"created_at"`
-	UpdatedAt sql.NullTime    `json:"updated_at"`
+	ID        uuid.UUID
+	Title     string
+	OwnerID   uuid.NullUUID
+	Content   sql.NullString
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
 }
 
 type DocumentPermission struct {
-	UserID     uuid.UUID       `json:"user_id"`
-	DocumentID uuid.UUID       `json:"document_d"`
-	Permission sql.NullString  `json:"permission"`
+	UserID     uuid.UUID
+	DocumentID uuid.UUID
+	Permission sql.NullString
 }
 
 type User struct {
-	ID           uuid.UUID     `json:"id"`
-	Email        string        `json:"email"`
-	PasswordHash string        `json:"hashed_password"`
-	CreatedAt    sql.NullTime  `json:"created_at"`
+	ID           uuid.UUID
+	Email        string
+	PasswordHash string
+	CreatedAt    sql.NullTime
 }

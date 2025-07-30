@@ -45,9 +45,9 @@ export default function DocumentList() {
           <p>No documents found.</p>
         ) : (
           documents.map((doc) => (
-            <Link to={`/document/${doc.id}`} className="document-tile">
-              <h3>{doc.title}</h3>
-              <p>{new Date(doc.created_at.Time).toLocaleDateString()}</p>
+            <Link to={`/document/${doc.ID}`} className="document-tile">
+              <h3>{doc.Title}</h3>
+              <p>{new Date(doc.CreatedAt.Time).toLocaleDateString()}</p>
             </Link>
           ))
         )}

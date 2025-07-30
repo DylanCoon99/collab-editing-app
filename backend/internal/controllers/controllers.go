@@ -146,6 +146,40 @@ func (cfg *ApiConfig) CreateDocumentForCurrentUser(c *gin.Context) {
 		return
 	}
 
+	// When a document is created; we also need to insert into document permissions
+
+	/*
+
+	type ShareDocumentParams struct {
+		UserID     uuid.UUID
+		DocumentID uuid.UUID
+		Permission sql.NullString
+	}
+
+	*/
+
+
+	permission_struct := sql.NullString {
+		String: "owner",
+		Valid: true,
+	}
+
+
+
+	shareDocumentParams := database.ShareDocumentParams {
+		UserID: user_uuid,
+		DocumentID: document.ID,
+		Permission: permission_struct,
+	}
+
+	err = cfg.DBQueries.ShareDocument(c, shareDocumentParams)
+
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create share document object.", "Details": err})
+		return
+	}
+
 
 	c.JSON(http.StatusCreated, document)
 	return
@@ -302,6 +336,7 @@ func (cfg *ApiConfig) GetDocumentPermissions(c *gin.Context) {
 
 
 	if err != nil {
+		log.Printf("Here is the error:%v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user id."})
 		return
 	}
@@ -311,6 +346,8 @@ func (cfg *ApiConfig) GetDocumentPermissions(c *gin.Context) {
 
 
 	if err != nil {
+		log.Printf("Here is the error:%v", err)
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse document id."})
 		return
 	}
@@ -326,6 +363,8 @@ func (cfg *ApiConfig) GetDocumentPermissions(c *gin.Context) {
 	permissions, err := cfg.DBQueries.GetDocumentPermission(c, params)
 	
 	if err != nil {
+		log.Printf("Here is the error:%v", err)
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database for permissions."})
 		return
 	}

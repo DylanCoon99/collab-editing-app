@@ -20,7 +20,8 @@ function App() {
         <Route path="/document/:id" element={
         <RequireAuth>
           <DocumentEditor />
-        </RequireAuth>} />
+        </RequireAuth>
+        } />
 
       </Routes>
     </Router>
