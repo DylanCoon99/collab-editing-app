@@ -4,13 +4,17 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import Register from './pages/Register';
 import DocumentEditor from './pages/DocumentEditor';
-import RequireAuth from './components/RequireAuth'
+import RequireAuth from './components/RequireAuth';
+import ErrorBoundary from './components/ErrorBoundary';
+import TestComponent from './components/TestComponent';
+
 //import './styles.css'
 
 function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/test" element={<TestComponent />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={
@@ -18,9 +22,11 @@ function App() {
           <Home />
         </RequireAuth>} />
         <Route path="/document/:id" element={
-        <RequireAuth>
-          <DocumentEditor />
-        </RequireAuth>
+       
+          <RequireAuth>
+            <DocumentEditor />
+          </RequireAuth>
+        
         } />
 
       </Routes>

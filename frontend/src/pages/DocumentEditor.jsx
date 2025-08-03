@@ -4,7 +4,7 @@ import WebSocketComponent from '../components/WebSocketComponent';
 
 export default function DocumentEditor() {
   const { id } = useParams();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [doc, setDoc] = useState(null);
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
@@ -19,27 +19,91 @@ export default function DocumentEditor() {
   const [shareEmail, setShareEmail] = useState('');
   const [sharePermission, setSharePermission] = useState('view');
 
-  // Fetch current user
-  const fetchCurrentUser = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setError('No authentication token found');
+  
+  useEffect(() => {
+    console.log('useEffect: Document ID:', id, 'URL:', window.location.pathname);
+
+    if (!id) {
+      setError('Invalid document ID');
+      navigate('/home', { replace: true });
       return;
     }
 
-    try {
-      const res = await fetch('http://localhost:8080/api/user', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    const initialize = async () => {
+      console.log('initialize: Starting...');
+      try {
+        const fetchedUserId = await fetchCurrentUser();
+        console.log('initialize: fetchedUserId:', fetchedUserId);
+        if (fetchedUserId) {
+          setUserId(fetchedUserId);
+          await fetchDoc();
+          await fetchPermissions(fetchedUserId);
+          console.log('initialize: Completed', { userId: fetchedUserId, doc, userPermission });
+        } else {
+          setError('Failed to fetch user ID');
+          navigate('/login', { replace: true });
+        }
+      } catch (err) {
+        console.error('initialize: Error:', err);
+        setError('Initialization failed: ' + err.message);
+      }
+    };
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to fetch user');
+    initialize();
+  }, [id, navigate]);
+  
 
-      setUserId(data.data.ID);
-    } catch (err) {
-      console.error('Error fetching user:', err);
-      setError('Failed to fetch user information');
-      return null
+const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
+    const token = localStorage.getItem('token');
+    console.log('fetchCurrentUser: token exists:', !!token, 'token:', token);
+    if (!token) {
+      setError('No authentication token found');
+      navigate('/login', { replace: true });
+      return null;
+    }
+
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const res = await fetch('http://localhost:8080/api/user', {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
+        });
+        console.log(`fetchCurrentUser: attempt ${attempt}, status: ${res.status}, statusText: ${res.statusText}`);
+
+        const text = await res.text();
+        console.log('fetchCurrentUser: raw response:', text);
+
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          console.error('fetchCurrentUser: JSON parse error:', err);
+          setError('Invalid response format from server');
+          return null;
+        }
+        console.log('fetchCurrentUser: parsed data:', data);
+
+        if (!res.ok) {
+          throw new Error(data.message || `HTTP ${res.status}: ${res.statusText}`);
+        }
+
+        const fetchedUserId = data.data?.ID || data.data?.id || data.ID || data.id;
+        if (!fetchedUserId) {
+          throw new Error('User ID not found in response: ' + JSON.stringify(data));
+        }
+
+        console.log('fetchCurrentUser: fetchedUserId:', fetchedUserId);
+        return fetchedUserId;
+      } catch (err) {
+        console.error(`fetchCurrentUser: attempt ${attempt} failed:`, err);
+        if (attempt < retries) {
+          console.log(`fetchCurrentUser: Retrying after ${delayMs}ms...`);
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        } else {
+          setError('Failed to fetch user: ' + err.message);
+          return null;
+        }
+      }
     }
   };
 
@@ -96,28 +160,6 @@ export default function DocumentEditor() {
     }
   };
 
-
-  useEffect(() => {
-    console.log('Document ID from useParams:', id);
-    console.log('Current URL:', window.location.pathname);
-    console.log('Full useParams:', useParams());
-    if (!id) {
-      setError('Invalid document ID. Redirecting to document list.');
-      navigate('/documents');
-      return;
-    }
-
-    const initialize = async () => {
-      const fetchedUserId = await fetchCurrentUser();
-      if (fetchedUserId) {
-        setUserId(fetchedUserId);
-        await fetchDoc();
-        await fetchPermissions(fetchedUserId);
-      }
-    };
-
-    initialize();
-  }, [id, navigate]);
 
   const handleContentChange = (e) => {
     const newContent = e.target.value;
@@ -419,3 +461,4 @@ export default function DocumentEditor() {
     </div>
   );
 }
+
