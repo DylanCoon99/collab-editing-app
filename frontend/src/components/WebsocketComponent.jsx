@@ -40,10 +40,13 @@ const WebSocketComponent = ({ url, onMessage, setSendMessage, setIsWsConnected, 
         try {
           const message = JSON.parse(event.data);
           console.log('WebSocketComponent: Received message:', message);
+          if (!message.user_id || !message.message_type) {
+            console.error('WebSocketComponent: Invalid message format:', message);
+            return;
+          }
           onMessage(message);
         } catch (err) {
-          console.error('WebSocketComponent: Error parsing message:', err);
-        }
+          console.error('WebSocketComponent: Error parsing message:', err, 'raw data:', event.data);        }
       };
 
       wsRef.current.onclose = () => {
@@ -60,8 +63,12 @@ const WebSocketComponent = ({ url, onMessage, setSendMessage, setIsWsConnected, 
       };
     };
 
-    connect();
-
+    if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED || wsRef.current.readyState === WebSocket.CLOSING) {
+      connect();
+    } else {
+      console.log('WebSocketComponent: Existing connection active, skipping connect');
+    }
+    
     // Cleanup on unmount
     return () => {
       console.log('WebSocketComponent: Cleaning up');
