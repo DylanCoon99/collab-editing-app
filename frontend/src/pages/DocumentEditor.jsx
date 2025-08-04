@@ -21,7 +21,7 @@ export default function DocumentEditor() {
 
   
   useEffect(() => {
-    console.log('useEffect: Document ID:', id, 'URL:', window.location.pathname);
+    console.log('DocumentEditor: useEffect: Document ID:', id, 'URL:', window.location.pathname);
 
     if (!id) {
       setError('Invalid document ID');
@@ -166,8 +166,12 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
     const cursorPos = e.target.selectionStart;
     let message = null;
 
+    if (userPermission !== 'edit' && userPermission !== 'owner') {
+      setError('You do not have permission to edit this document');
+      return;
+    }
+
     if (newContent.length > prevContent.current.length) {
-      // Insert
       const insertedLength = newContent.length - prevContent.current.length;
       const position = cursorPos - insertedLength;
       const insertedText = newContent.slice(position, cursorPos);
@@ -178,7 +182,6 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
         content: insertedText,
       };
     } else if (newContent.length < prevContent.current.length) {
-      // Delete
       const deletedLength = prevContent.current.length - newContent.length;
       const position = cursorPos;
       message = {
@@ -292,8 +295,9 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
   };
 
 
+
   const handleWebSocketMessage = (message) => {
-    if (message.user_id === userId) return; // Ignore own changes
+    if (message.user_id === userId) return;
     if (message.message_type === 'insert') {
       setContent((prev) => {
         const newContent = prev.slice(0, message.position) + message.content + prev.slice(message.position);
@@ -308,6 +312,7 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
       });
     }
   };
+
 
   return (
     <div style={{ padding: '2rem', background: '#1c1c1c', color: '#fff', minHeight: '100vh' }}>
@@ -450,6 +455,7 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
                 >
                   Cancel
                 </button>
+                
               </div>
             </div>
           )}
@@ -457,6 +463,15 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
         </>
       ) : (
         <p>Loading document{userId ? '' : ' and user'}{userPermission ? '' : ' and permissions'}...</p>
+      )}
+      {userId && (
+        <WebSocketComponent
+          url={`ws://localhost:8080/api/ws?doc_id=${id}&user_id=${userId}`}
+          onMessage={handleWebSocketMessage}
+          setSendMessage={setSendMessage}
+          setIsWsConnected={setIsWsConnected}
+          pendingMessages={pendingMessages.current}
+        />
       )}
     </div>
   );
