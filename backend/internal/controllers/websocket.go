@@ -55,14 +55,14 @@ func (cfg *ApiConfig) HandleWebSocket(c *gin.Context) {
 	document_uuid, err := uuid.Parse(document_id)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse document id."})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse document id.", "Details": err})
 		return
 	}
 
 	user_uuid, err := uuid.Parse(user_id)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user id."})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user id.", "Details": err})
 		return
 	}
 
@@ -222,6 +222,7 @@ func (d *Document) runBroadcaster() {
 			default:
 				log.Printf("Send channel full for client %s in document %s", client.UserID.String(), d.DocID.String())
 				delete(d.Clients, userID)
+				log.Printf("CLIENT %v DELETED.", userID.String())
 				close(client.Send)
 				client.Conn.Close()
 			}

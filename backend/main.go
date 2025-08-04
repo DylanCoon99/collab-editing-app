@@ -95,6 +95,7 @@ func main() {
 		// login and register endpoints
 		public.POST("/login", apiCfg.Login)
 		public.POST("/register", apiCfg.Register)
+		public.GET("/ws", apiCfg.HandleWebSocket)
 	}
 
 	log.Println("Server starting on port 8080...")
