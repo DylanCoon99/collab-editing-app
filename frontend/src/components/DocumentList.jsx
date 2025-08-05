@@ -41,7 +41,7 @@ export default function DocumentList() {
       {error && <p className="error">{error}</p>}
 
       <div className="document-grid">
-        {documents.length === 0 ? (
+        {documents === null || documents.length === 0 ? (
           <p>No documents found.</p>
         ) : (
           documents.map((doc) => (
