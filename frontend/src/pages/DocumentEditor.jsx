@@ -18,6 +18,8 @@ export default function DocumentEditor() {
   const [showShareForm, setShowShareForm] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
   const [sharePermission, setSharePermission] = useState('view');
+  const [cursors, setCursors] = useState({}); // Store other users' cursor positions
+  const textareaRef = useRef(null);
 
   
   useEffect(() => {
@@ -64,7 +66,7 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        const res = await fetch('http://localhost:8080/api/user', {
+        const res = await fetch('https://collab-editing-app.onrender.com/api/user', {
           headers: { Authorization: `Bearer ${token}` },
           credentials: 'include',
         });
@@ -116,7 +118,7 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
     }
 
     try {
-      const res = await fetch(`http://localhost:8080/api/document/${id}`, {
+      const res = await fetch(`https://collab-editing-app.onrender.com/api/document/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -138,11 +140,12 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
     const token = localStorage.getItem('token');
     if (!token) {
       setError('No authentication token found');
+      navigate('/login', {replace: true})
       return;
     }
 
     try {
-      const res = await fetch(`http://localhost:8080/api/user/permissions?document_id=${id}&user_id=${userId}`, {
+      const res = await fetch(`https://collab-editing-app.onrender.com/api/user/permissions?document_id=${id}&user_id=${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -213,12 +216,37 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
     prevContent.current = newContent;
   };
 
+
+  const handleCursorChange = (e) => {
+    if (!isWsConnected || !sendMessage || !userId) {
+      console.log('DocumentEditor: Cannot send cursor update, connection or userId missing');
+      return;
+    }
+
+    const position = e.target.selectionStart;
+    const message = {
+      user_id: userId,
+      message_type: 'cursor',
+      position,
+    };
+
+    try {
+      sendMessage(JSON.stringify(message));
+      console.log('DocumentEditor: Sent cursor update:', message);
+    } catch (err) {
+      console.error('DocumentEditor: Error sending cursor update:', err);
+      setError('Failed to send cursor update');
+    }
+  };
+
+
+
   const handleSave = async () => {
     const token = localStorage.getItem('token');
     setStatus('');
 
     try {
-      const res = await fetch(`http://localhost:8080/api/document/${id}`, {
+      const res = await fetch(`https://collab-editing-app.onrender.com/api/document/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -256,7 +284,7 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
     setStatus('');
 
     try {
-      const res = await fetch(`http://localhost:8080/api/user/permissions`, {
+      const res = await fetch(`https://collab-editing-app.onrender.com/api/user/permissions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -296,23 +324,116 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
 
 
 
-  const handleWebSocketMessage = (message) => {
-    if (message.user_id === userId) return;
+ const handleWebSocketMessage = (message) => {
+    console.log('DocumentEditor: Received WebSocket message:', message);
+
+    if (!message.user_id || !message.message_type) {
+      console.error('DocumentEditor: Invalid message format:', message);
+      setError('Received invalid message format');
+      return;
+    }
+
+    if (message.user_id === userId) {
+      console.log('DocumentEditor: Ignoring own message from user:', userId);
+      return;
+    }
+
+    if (!['insert', 'delete', 'cursor'].includes(message.message_type)) {
+      console.error('DocumentEditor: Invalid message_type:', message.message_type);
+      setError('Received invalid message type');
+      return;
+    }
+
     if (message.message_type === 'insert') {
+      if (typeof message.position !== 'number' || !message.content || typeof message.content !== 'string') {
+        console.error('DocumentEditor: Invalid insert message:', message);
+        setError('Received invalid insert message');
+        return;
+      }
       setContent((prev) => {
+        if (message.position < 0 || message.position > prev.length) {
+          console.error('DocumentEditor: Invalid position for insert:', message.position, 'content length:', prev.length);
+          setError('Invalid insert position');
+          return prev;
+        }
         const newContent = prev.slice(0, message.position) + message.content + prev.slice(message.position);
         prevContent.current = newContent;
+        console.log('DocumentEditor: Inserted content at position', message.position, 'new content:', newContent);
         return newContent;
       });
     } else if (message.message_type === 'delete') {
+      if (typeof message.position !== 'number' || typeof message.length !== 'number') {
+        console.error('DocumentEditor: Invalid delete message:', message);
+        setError('Received invalid delete message');
+        return;
+      }
       setContent((prev) => {
+        if (message.position < 0 || message.position + message.length > prev.length) {
+          console.error('DocumentEditor: Invalid position or length for delete:', message.position, message.length, 'content length:', prev.length);
+          setError('Invalid delete position or length');
+          return prev;
+        }
         const newContent = prev.slice(0, message.position) + prev.slice(message.position + message.length);
         prevContent.current = newContent;
+        console.log('DocumentEditor: Deleted content at position', message.position, 'length:', message.length, 'new content:', newContent);
         return newContent;
+      });
+    } else if (message.message_type === 'cursor') {
+      if (typeof message.position !== 'number') {
+        console.error('DocumentEditor: Invalid cursor message:', message);
+        setError('Received invalid cursor message');
+        return;
+      }
+      setCursors((prev) => {
+        if (message.position < 0 || message.position > content.length) {
+          console.error('DocumentEditor: Invalid cursor position:', message.position, 'content length:', content.length);
+          return prev;
+        }
+        return {
+          ...prev,
+          [message.user_id]: { position: message.position, updated: Date.now() },
+        };
       });
     }
   };
 
+
+    // Calculate cursor position in pixels
+  const getCursorStyle = (position, userId) => {
+    if (!textareaRef.current || position < 0 || position > content.length) return null;
+
+    // Create a temporary span to measure text width
+    const span = document.createElement('span');
+    span.style.font = getComputedStyle(textareaRef.current).font;
+    span.style.position = 'absolute';
+    span.style.visibility = 'hidden';
+    span.textContent = content.slice(0, position).replace(/\n/g, ' ');
+    document.body.appendChild(span);
+    const width = span.offsetWidth;
+    document.body.removeChild(span);
+
+    // Calculate line and column
+    const lines = content.slice(0, position).split('\n');
+    const line = lines.length - 1;
+    const column = lines[line].length;
+
+    const lineHeight = parseFloat(getComputedStyle(textareaRef.current).lineHeight) || 16;
+    const fontSize = parseFloat(getComputedStyle(textareaRef.current).fontSize) || 16;
+
+    return {
+      top: `${line * lineHeight}px`,
+      left: `${column * (width / position)}px`,
+      backgroundColor: getUserColor(userId),
+      height: `${lineHeight}px`,
+    };
+  };
+
+  // Assign unique colors to users
+  const getUserColor = (userId) => {
+    const colors = ['#ff4d4f', '#40c4ff', '#ffca28', '#4caf50', '#ab47bc'];
+    const index = parseInt(userId.replace(/-/g, '').slice(0, 8), 16) % colors.length;
+    return colors[index];
+  };
 
   return (
     <div style={{ padding: '2rem', background: '#1c1c1c', color: '#fff', minHeight: '100vh' }}>
@@ -324,6 +445,7 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
           <textarea
             value={content}
             onChange={handleContentChange}
+            onSelect={handleCursorChange}
             readOnly={userPermission !== 'edit' && userPermission !== 'owner'}
             style={{
               width: '100%',
@@ -339,6 +461,25 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
               opacity: (userPermission !== 'edit' && userPermission !== 'owner') ? 0.7 : 1,
             }}
           />
+          <div>
+            {Object.entries(cursors).map(([otherUserId, cursor]) => {
+              const style = getCursorStyle(cursor.position, otherUserId);
+              if (!style) return null;
+              return (
+                <div
+                  key={otherUserId}
+                  style={{
+                    position: 'absolute',
+                    width: '2px',
+                    ...style,
+                    pointerEvents: 'none',
+                    zIndex: 10,
+                  }}
+                  title={`User: ${otherUserId.slice(0, 8)}`}
+                />
+              );
+            })}
+          </div>
           <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
             <button
               onClick={handleSave}
@@ -466,7 +607,7 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
       )}
       {userId && (
         <WebSocketComponent
-          url={`ws://localhost:8080/api/ws?doc_id=${id}&user_id=${userId}`}
+          url={`ws://collab-editing-app.onrender.com/api/ws?doc_id=${id}&user_id=${userId}`}
           onMessage={handleWebSocketMessage}
           setSendMessage={setSendMessage}
           setIsWsConnected={setIsWsConnected}

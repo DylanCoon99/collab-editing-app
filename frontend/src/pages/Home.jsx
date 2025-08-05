@@ -15,7 +15,7 @@ export default function Home() {
 
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8080/api/document', {
+      const response = await fetch('https://collab-editing-app.onrender.com/api/document', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

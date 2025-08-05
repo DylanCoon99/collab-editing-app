@@ -12,7 +12,7 @@ export default function DocumentList() {
       const token = localStorage.getItem("token");
 
       try {
-        const res = await fetch("http://localhost:8080/api/user/documents", {
+        const res = await fetch("https://collab-editing-app.onrender.com/api/user/documents", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

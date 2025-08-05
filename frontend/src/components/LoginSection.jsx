@@ -34,7 +34,7 @@ function LoginSection() {
     setAlert({ show: false, message: '', variant: '' });
 
     try {
-      const res = await fetch('http://localhost:8080/auth/login', {
+      const res = await fetch('https://collab-editing-app.onrender.com/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
