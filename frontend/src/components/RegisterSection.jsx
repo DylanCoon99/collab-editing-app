@@ -49,7 +49,7 @@ function RegisterSection() {
         // navigate user to the login page
         setAlert({ show: true, message: 'Account creation successful!', variant: 'success' });
         setTimeout(() => {
-          navigate('/login'); // redirect after success
+          navigate('/'); // redirect after success
         }, 800);
 
 

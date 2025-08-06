@@ -7,7 +7,7 @@ function RequireAuth({ children }) {
   // Optional: decode and validate the token with jwt-decode
   const isAuthenticated = !!token;
 
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  return isAuthenticated ? children : <Navigate to="/" />;
 }
 
 export default RequireAuth;

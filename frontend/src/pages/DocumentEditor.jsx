@@ -43,7 +43,7 @@ export default function DocumentEditor() {
           console.log('initialize: Completed', { userId: fetchedUserId, doc, userPermission });
         } else {
           setError('Failed to fetch user ID');
-          navigate('/login', { replace: true });
+          navigate('/', { replace: true });
         }
       } catch (err) {
         console.error('initialize: Error:', err);
@@ -60,7 +60,7 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
     console.log('fetchCurrentUser: token exists:', !!token, 'token:', token);
     if (!token) {
       setError('No authentication token found');
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
       return null;
     }
 
@@ -140,7 +140,7 @@ const fetchCurrentUser = async (retries = 2, delayMs = 1000) => {
     const token = localStorage.getItem('token');
     if (!token) {
       setError('No authentication token found');
-      navigate('/login', {replace: true})
+      navigate('/', {replace: true})
       return;
     }
 
