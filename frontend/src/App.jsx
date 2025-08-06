@@ -6,7 +6,6 @@ import Register from './pages/Register';
 import DocumentEditor from './pages/DocumentEditor';
 import RequireAuth from './components/RequireAuth';
 import ErrorBoundary from './components/ErrorBoundary';
-import TestComponent from './components/TestComponent';
 
 //import './styles.css'
 
@@ -14,7 +13,6 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/test" element={<TestComponent />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={
