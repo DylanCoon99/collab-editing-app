@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams , useNavigate } from 'react-router-dom';
-import WebSocketComponent from '../components/WebSocketComponent';
+import WebSocketComponent from '../components/WebSocketComponent.jsx';
 
 export default function DocumentEditor() {
   const { id } = useParams();
